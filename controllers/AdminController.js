@@ -1,4 +1,5 @@
 const student = require("../models/student");
+const admin=require("../models/admin")
 const bcrypt = require('bcrypt');
 const jwt=require('jsonwebtoken')
 const addStudentController = async(req,res) => {
@@ -49,7 +50,35 @@ const getStudentController = async(req,res) => {
     }
 }
 
-const adminregisterController = () => {
+const adminregisterController = async (req, res) => {
+    try {
+        const existingUser = await admin.findOne({ email:req.body.email });
+        if (existingUser) {
+            return res.send({
+                success: false,
+                message: "User already exists ",
+            })
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        req.body.password = hashedPassword
+
+        const user = new admin(req.body);
+        await user.save();
+        return res.send({
+            success: true,
+            message: "Admin registration successfully !",
+            user
+        })
+
+    } catch (error) {
+        console.log(error)
+        return res.send({
+            success: false,
+            message: "error in admin register",
+            error
+        })
+    }
     
 }
 const adminloginController = () => {
